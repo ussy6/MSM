@@ -1,0 +1,16 @@
+graph_old
+img_temp_20221222-20221228
+GW1AM2_202302170321_206A_L2SGSICLC3300300.h5
+sst_OISST.npz
+
+/csv/**
+!/csv/**/
+!/csv/**/.gitkeep
+
+/netcdf/**
+!/netcdf/**/
+!/netcdf/**/.gitkeep
+
+/npz/**
+!/npz/**/
+!/npz/**/.gitkeep
