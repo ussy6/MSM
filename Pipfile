@@ -11,6 +11,7 @@ netcdf4 = "*"
 cartopy = "*"
 pandas = "*"
 h5py = "*"
+wxparams = {git = "https://github.com/Yoshiki443/weather_parameters"}
 
 [dev-packages]
 
