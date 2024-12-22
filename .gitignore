@@ -11,6 +11,12 @@ sst_OISST.npz
 !/netcdf/**/
 !/netcdf/**/.gitkeep
 
+/netcdf_old/**
+!/netcdf_old/**/
+!/netcdf_old/**/.gitkeep
+
 /npz/**
 !/npz/**/
 !/npz/**/.gitkeep
+
+/output/** 

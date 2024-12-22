@@ -1,0 +1,9 @@
+{
+    "download_start_date": "2022-05-01",
+    "download_end_date": "2022-05-02",
+    "combine_start_date": "2022-05-01",
+    "combine_end_date": "2022-05-02",
+    "target_latitude": 43.5789,
+    "target_longitude": 144.5288,
+    "output_directory": "./output"
+}
