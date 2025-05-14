@@ -266,7 +266,7 @@ def combine_csv_files(csv_base_dir, target_name, combine_start_date, combine_end
 
 def process_download_and_csv(config_file):
     """設定ファイルに基づいてデータのダウンロードとCSV変換を実行する"""
-    with open(config_file, 'r') as f:
+    with open(config_file, 'r', encoding='utf-8') as f:
         config = json.load(f)
 
     start_date = config['download_start_date']
@@ -339,7 +339,7 @@ def process_download_and_csv(config_file):
 
 def process_combine_csv(config_file):
     """設定ファイルに基づいてCSVファイルの結合処理を実行する"""
-    with open(config_file, 'r') as f:
+    with open(config_file, 'r', encoding='utf-8') as f:
         config = json.load(f)
 
     combine_start_date = config['combine_start_date']
