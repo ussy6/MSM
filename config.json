@@ -1,9 +1,41 @@
 {
-    "download_start_date": "2022-05-01",
-    "download_end_date": "2022-05-02",
-    "combine_start_date": "2022-05-01",
-    "combine_end_date": "2022-05-02",
-    "target_latitude": 43.5789,
-    "target_longitude": 144.5288,
-    "output_directory": "./output"
+    "download_start_date": "2023-01-01",
+    "download_end_date": "2024-12-31",
+    "combine_start_date": "2023-01-01",
+    "combine_end_date": "2024-12-31",
+    "targets": {
+        "yukikabe": {
+            "latitude": 43.6367,
+            "longitude": 142.9083,
+            "description": "雪壁雪渓観測地点"
+        },
+        "asahikawa": {
+            "latitude": 43.757,
+            "longitude": 142.372,
+            "description": "旭川地方気象台"
+        },
+        "midpoint_1": {
+            "latitude": 43.7272,
+            "longitude": 142.5063,
+            "description": "側線上の中間地点1"
+        },
+        "midpoint_2": {
+            "latitude": 43.6971,
+            "longitude": 142.6404,
+            "description": "側線上の中間地点2"
+        },
+        "midpoint_3": {
+            "latitude": 43.6670,
+            "longitude": 142.7745,
+            "description": "側線上の中間地点3"
+        },
+        "kitami_city": {
+            "latitude": 43.8041,
+            "longitude": 143.8908,
+            "description": "北見市中心部"
+        }
+    },
+    "output_directory": "./output",
+    "skip_existing_files": true,
+    "auto_confirm": false
 }
