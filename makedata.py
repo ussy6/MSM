@@ -183,12 +183,14 @@ def extract_msm_data_to_csv(nc_file, targets, output_dir):
         return False
 
 def combine_csv_files(csv_base_dir, target_name, combine_start_date, combine_end_date, output_dir):
-    """特定の地点の期間内のCSVファイルを結合し、統計データを作成する"""
+    """特定の地点の期間内のCSVファイルを結合し、統計データを作成する。
+    各気象要素の特性に応じた適切な統計処理を行う。"""
     try:
         start_dt = datetime.strptime(combine_start_date, '%Y-%m-%d')
         end_dt = datetime.strptime(combine_end_date, '%Y-%m-%d')
         
         target_dir = os.path.join(csv_base_dir, target_name)
+        print(f"処理対象ディレクトリ: {target_dir}")
         
         if not os.path.exists(target_dir):
             print(f"エラー: 地点 '{target_name}' のデータディレクトリが見つかりません: {target_dir}")
@@ -242,26 +244,131 @@ def combine_csv_files(csv_base_dir, target_name, combine_start_date, combine_end
         all_data['datetime'] = pd.to_datetime(all_data['time'])
         all_data['date'] = all_data['datetime'].dt.date
         
-        # 数値列の特定
-        numeric_columns = all_data.select_dtypes(include=[np.number]).columns
+        print("日別統計を計算中...")
+        # 気象変数ごとに異なる統計処理を行う
         
-        # 日別平均の計算
-        daily_avg = all_data.groupby('date')[numeric_columns].mean()
+        # 1. 日別統計の計算
+        # 変数ごとの処理を定義
+        daily_stats = {}
+        
+        # グループ化
+        daily_groups = all_data.groupby('date')
+        
+        # 数値列の特定（風向を除く）
+        numeric_columns = all_data.select_dtypes(include=[np.number]).columns.tolist()
+        if 'wind_direction' in numeric_columns:
+            numeric_columns.remove('wind_direction')
+        
+        # a. 平均値を計算する変数（気温、気圧、相対湿度など）
+        mean_variables = ['temp', 'psea', 'sp', 'rh', 'dswrf', 'grid_latitude', 'grid_longitude']
+        for var in mean_variables:
+            if var in all_data.columns:
+                daily_stats[f'{var}_mean'] = daily_groups[var].mean()
+        
+        # b. 積算値を計算する変数（降水量）
+        sum_variables = ['r1h']
+        for var in sum_variables:
+            if var in all_data.columns:
+                daily_stats[f'{var}_sum'] = daily_groups[var].sum()
+        
+        # c. 最大値・最小値を計算する変数（気温、風速など）
+        max_min_variables = ['temp', 'wind_speed']
+        for var in max_min_variables:
+            if var in all_data.columns:
+                daily_stats[f'{var}_max'] = daily_groups[var].max()
+                daily_stats[f'{var}_min'] = daily_groups[var].min()
+        
+        # d. 風向の処理（最頻値と平均風向）
+        if 'wind_direction' in all_data.columns and 'u' in all_data.columns and 'v' in all_data.columns:
+            # 最頻値（10度ごとのビンに分類して計算）
+            def get_most_frequent_direction(group):
+                # 10度ごとのビンに分類
+                bins = list(range(0, 361, 10))
+                bin_labels = [f"{i}" for i in range(0, 360, 10)]
+                binned = pd.cut(group, bins=bins, labels=bin_labels, include_lowest=True, right=False)
+                # 最頻値を計算
+                most_common = binned.value_counts().idxmax()
+                return float(most_common) + 5  # ビンの中央値
+            
+            daily_stats['wind_direction_mode'] = daily_groups['wind_direction'].apply(get_most_frequent_direction)
+            
+            # ベクトル平均（U, V成分から計算）
+            daily_u_mean = daily_groups['u'].mean()
+            daily_v_mean = daily_groups['v'].mean()
+            daily_stats['wind_direction_vector'] = (270 - np.degrees(np.arctan2(daily_v_mean, daily_u_mean))) % 360
+        
+        # e. その他のカスタム統計（晴れの時間、曇りの時間など）
+        if 'ncld' in all_data.columns:
+            # 晴れの時間（雲量3未満の時間数）
+            daily_stats['clear_hours'] = daily_groups['ncld'].apply(lambda x: sum(x < 3))
+            # 曇りの時間（雲量7以上の時間数）
+            daily_stats['cloudy_hours'] = daily_groups['ncld'].apply(lambda x: sum(x >= 7))
+        
+        # f. 降水日の判定（日降水量1mm以上）
+        if 'r1h' in all_data.columns:
+            daily_stats['precipitation_day'] = daily_groups['r1h'].sum() >= 1.0
+        
+        # 日別統計をデータフレームに変換
+        daily_df = pd.DataFrame(daily_stats)
+        
+        # 結果の保存
         daily_file = os.path.join(daily_dir, f"{target_name}_{start_str}-{end_str}_daily.csv")
-        daily_avg.to_csv(daily_file)
-        print(f"日別平均データを保存しました: {daily_file}")
+        daily_df.to_csv(daily_file)
+        print(f"日別統計データを保存しました: {daily_file}")
         
-        # 月別平均の計算
+        # 2. 月別統計の計算
+        print("月別統計を計算中...")
         all_data['month'] = all_data['datetime'].dt.to_period('M')
-        monthly_avg = all_data.groupby('month')[numeric_columns].mean()
+        monthly_groups = all_data.groupby('month')
+        
+        monthly_stats = {}
+        
+        # a. 平均値を計算する変数
+        for var in mean_variables:
+            if var in all_data.columns:
+                monthly_stats[f'{var}_mean'] = monthly_groups[var].mean()
+        
+        # b. 積算値を計算する変数
+        for var in sum_variables:
+            if var in all_data.columns:
+                monthly_stats[f'{var}_sum'] = monthly_groups[var].sum()
+                
+        # c. 最大値・最小値を計算する変数
+        for var in max_min_variables:
+            if var in all_data.columns:
+                monthly_stats[f'{var}_max'] = monthly_groups[var].max()
+                monthly_stats[f'{var}_min'] = monthly_groups[var].min()
+        
+        # d. 風向の処理
+        if 'wind_direction' in all_data.columns and 'u' in all_data.columns and 'v' in all_data.columns:
+            # ベクトル平均
+            monthly_u_mean = monthly_groups['u'].mean()
+            monthly_v_mean = monthly_groups['v'].mean()
+            monthly_stats['wind_direction_vector'] = (270 - np.degrees(np.arctan2(monthly_v_mean, monthly_u_mean))) % 360
+        
+        # e. 月間降水日数
+        # 日別統計から月ごとの降水日数を計算
+        if 'precipitation_day' in daily_df.columns:
+            # 日付から月を抽出
+            daily_df['month'] = pd.to_datetime(daily_df.index).to_period('M')
+            # 月ごとの降水日数をカウント
+            precip_days = daily_df.groupby('month')['precipitation_day'].sum()
+            monthly_stats['precipitation_days'] = precip_days
+        
+        # 月別統計をデータフレームに変換
+        monthly_df = pd.DataFrame(monthly_stats)
+        
+        # 結果の保存
         monthly_file = os.path.join(monthly_dir, f"{target_name}_{start_str}-{end_str}_monthly.csv")
-        monthly_avg.to_csv(monthly_file)
-        print(f"月別平均データを保存しました: {monthly_file}")
+        monthly_df.to_csv(monthly_file)
+        print(f"月別統計データを保存しました: {monthly_file}")
         
         return True
         
     except Exception as e:
         print(f"エラー: CSVファイルの結合中に問題が発生しました: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def process_download_and_csv(config_file):
