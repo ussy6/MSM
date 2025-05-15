@@ -1,7 +1,7 @@
 {
     "download_start_date": "2007-01-01",
     "download_end_date": "2025-04-30",
-    "combine_start_date": "2007-01-01",
+    "combine_start_date": "2025-01-01",
     "combine_end_date": "2025-04-30",
     "targets": {
         "yukikabe": {
@@ -36,6 +36,7 @@
         }
     },
     "output_directory": "./output",
+    "input_csv_directory": "./output/csv_fixed",
     "skip_existing_files": true,
     "auto_confirm": false
 }

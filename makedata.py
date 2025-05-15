@@ -346,7 +346,10 @@ def process_combine_csv(config_file):
     combine_end_date = config['combine_end_date']
     targets = config['targets']
     output_dir = config['output_directory']
-    csv_dir = os.path.join(output_dir, 'csv')
+    
+    # 入力CSVディレクトリをconfigから取得（デフォルトは'csv'）
+    csv_dir = config.get('input_csv_directory', os.path.join(output_dir, 'csv'))
+    
     stats_dir = os.path.join(output_dir, 'statistics')
     
     if not os.path.exists(stats_dir):
